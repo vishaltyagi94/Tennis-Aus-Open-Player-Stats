@@ -1,0 +1,123 @@
+
+body{
+	font-size: 11px;
+	margin: 5px 0 0 15px;
+	font-family: 'Droid Sans', sans-serif;
+	font-weight: bold;
+}
+#lineChart{
+	width:55%;
+	float: left;
+}
+.chart{
+	width:30%;
+	float: left;
+}
+
+.x.axis path{
+	display: inline;
+}
+
+.x.axis{
+	font-size: 10px;
+	fill: #727075;
+}
+
+.y.axis text{
+	fill: #525055;
+}
+
+text{
+	opacity: 1;
+}
+
+text.shadow{
+	stroke: Gainsboro;
+	stroke-width: 0.75px;
+	opacity: 0.9;
+}
+
+path {
+	stroke: #888;
+	stroke-width: 2;
+	opacity: 0.45;
+	-moz-transition: all 0.01s;
+	-o-transition: all 0.01s;
+	-webkit-transition: all 0.01s;
+	transition: all 0.01s;
+	cursor: pointer;
+	fill: none;
+}
+
+.line{
+	fill: none;
+	stroke: grey;
+	stroke-width: 3px;
+}
+
+.axis path,
+.axis line, 
+.axis1 path,
+.axis1 line {
+  fill: none;
+  stroke: #989698;
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+  opacity: 1;
+}
+
+.x.axis{
+	color: red;
+}
+
+.axis line{
+	color: blue;
+}
+
+.line:hover {
+	opacity: 1;
+	stroke-width: 4;
+}
+
+g.players path {
+	stroke: #5387bd;
+	stroke-width: 4;
+	opacity: 1;
+}
+
+.data-circle:hover {
+	fill: black;
+}
+
+.data-circle {
+	fill: Silver;
+}
+
+#hoverlabel {
+	fill: #000000;
+	font-size: 10px;
+	color: red;
+	text-anchor: start;
+}
+
+div.tooltip {
+	position: absolute;
+	text-align: center;
+	width: 90px;
+	height: 32px;
+	padding: 1px;
+	font-size: 12px;
+	font-family: 'Droid Sans', sans-serif;
+	background: DodgerBlue;
+	border: 1px;
+	border-radius: 8px;
+	pointer-events: none;
+}
+
+.legendLine{
+	font-size: 8px;
+	padding-right:1.5px;
+	padding-left:1.5px;
+	padding-top:2px;
+	text-anchor: end;
+}
