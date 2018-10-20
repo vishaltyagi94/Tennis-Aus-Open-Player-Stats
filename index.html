@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<head>
+	<title>Overview of player statistics</title>
+	<style>
+		
+		body{
+			font-size: 11px;
+			margin: 5px 0 0 15px;
+			font-family: 'Droid Sans', sans-serif;
+			font-weight: bold;
+		}
+		#lineChart{
+			width:55%;
+			float: left;
+		}
+		.chart{
+			width:30%;
+			float: left;
+		}
+
+		.x.axis path{
+			display: inline;
+		}
+
+		.x.axis{
+			font-size: 10px;
+			fill: #727075;
+		}
+
+		.y.axis text{
+			fill: #525055;
+		}
+		
+		text{
+			opacity: 1;
+		}
+
+		text.shadow{
+			stroke: Gainsboro;
+			stroke-width: 0.75px;
+			opacity: 0.9;
+		}
+
+		path {
+			stroke: #888;
+			stroke-width: 2;
+			opacity: 0.45;
+			-moz-transition: all 0.01s;
+			-o-transition: all 0.01s;
+			-webkit-transition: all 0.01s;
+			transition: all 0.01s;
+			cursor: pointer;
+			fill: none;
+		}
+
+		.line{
+			fill: none;
+			stroke: grey;
+			stroke-width: 3px;
+		}
+
+		.axis path,
+		.axis line, 
+		.axis1 path,
+		.axis1 line {
+		  fill: none;
+		  stroke: #989698;
+		  stroke-width: 1;
+		  shape-rendering: crispEdges;
+		  opacity: 1;
+		}
+
+		.x.axis{
+			color: red;
+		}
+
+		.axis line{
+			color: blue;
+		}
+
+		.line:hover {
+			opacity: 1;
+			stroke-width: 4;
+		}
+
+		g.players path {
+			stroke: #5387bd;
+			stroke-width: 4;
+			opacity: 1;
+		}
+
+		.data-circle:hover {
+			fill: black;
+		}
+
+		.data-circle {
+			fill: Silver;
+		}
+
+		#hoverlabel {
+			fill: #000000;
+			font-size: 10px;
+			color: red;
+			text-anchor: start;
+		}
+
+		div.tooltip {
+			position: absolute;
+			text-align: center;
+			width: 90px;
+			height: 32px;
+			padding: 1px;
+			font-size: 12px;
+			font-family: 'Droid Sans', sans-serif;
+			background: DodgerBlue;
+			border: 1px;
+			border-radius: 8px;
+			pointer-events: none;
+		}
+
+		.legendLine{
+			font-size: 8px;
+			padding-right:1.5px;
+			padding-left:1.5px;
+			padding-top:2px;
+			text-anchor: end;
+		}
+	</style>
+	<title>Tennis Player Stats</title>
+</head>
+<body>
+	<h1><center>Tennis Player Stats</center></h1>
+	<div>
+		<p style="font-size: 14px">
+			The first graph is a line chart that describes the points scored by each player over the years. The functionalities that are included are - when the user clicks on the data points, a tooltip mentions the score for each year, hovering over the line highlights the line for the specific. The first graph includes a legend which also acts as a filter. Clicking on the names on the legend fades the line for the player or makes it appear again. The chart is interactive in a way when the user clicks on a player's line, the second chart is triggered. The second chart shows the attributes of the players over the years and also includes hovering and transparency transition functionality.
+		</p>
+	</div>
+	<div>
+	<div id="lineChart"></div>
+
+	<div id="chart" align="right" class="chart"></div>
+    </div>
+
+	<script src="https://d3js.org/d3.v3.js"></script>
+	<script src="RadarChart.js"></script>
+	
+	<script>
+		var margin = {top: 20, right: 100, bottom: 31, left: 20},
+		width = 700 - margin.left - margin.right,
+		height = 371 - margin.top - margin.bottom;
+
+		var color = d3.scale.category10();
+		var lineColumn = "player1";
+		var colorColumn = "player1";
+
+		var parseDate = d3.time.format("%y").parse;
+
+		var xAxisScale = d3.time.scale().range([0, width]);
+		
+		var yAxisScale = d3.scale.linear().range([height, 0]);
+		
+		var xAxis = d3.svg.axis()
+		.scale(xAxisScale)
+		.orient("bottom");
+
+		var yAxis = d3.svg.axis()
+		.scale(yAxisScale)
+		.orient("left");
+		
+		var line = d3.svg.line()
+		.x(function(d) { return xAxisScale(d.year); })
+		.y(function(d) { return yAxisScale(+d.pointScored); });
+
+		var div = d3.select("#lineChart").append("div")
+	    .attr("class", "tooltip")
+	    .style("opacity", 0);
+
+		var svg = d3.select("#lineChart").append("svg")
+		.attr("width", width + margin.right + margin.left)
+		.attr("height", height + margin.top + margin.bottom)
+		.append("g")
+		.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+		d3.csv("10yearAUSOpenMatches.csv", function(error, data){
+
+			var finalist_dataset= data.filter(function(d){return d.round=="Final";})
+
+			var finalists = [];
+			var lookup = {};
+
+			for(var i=0; i< finalist_dataset.length; i++)
+			{
+				if(!(finalist_dataset[i].player1 in lookup)){
+
+				finalists.push(finalist_dataset[i].player1);
+				lookup[finalist_dataset[i].player1] = 1;
+				}
+
+				if(!(finalist_dataset[i].player2 in lookup)){
+
+				finalists.push(finalist_dataset[i].player2);
+				lookup[finalist_dataset[i].player2] = 1;
+				}
+			}
+			var full_data=JSON.parse(JSON.stringify(data));
+
+			var data = data.filter(function (d){
+				return (d.player1 in lookup);
+			})
+			data.sort(function(a,b) {
+          		return d3.ascending(+a.year, +b.year);
+      		});
+
+			var dataset=[];
+			var j=0;
+			lookup={};
+
+			//Winner calculations begin
+
+			for(var i=0; i<data.length; i++)
+			{
+				if((!(data[i].player1 in lookup) && (data[i].winner1))) {
+					dataset[j]={
+						name: data[i].player1,
+						winPoints: [{
+							year: data[i].year,
+							pointScored: data[i].winner1,
+							reps: 1
+						}]
+					};
+					lookup[data[i].player1]=j;
+					j++;
+				}
+				else {
+
+					var sum=0, flag=0;
+					for(var k=0; k<dataset[lookup[data[i].player1]].winPoints.length; k++){
+						if((data[i].winner1) && (dataset[lookup[data[i].player1]].winPoints[k].year === data[i].year)){
+							sum=parseInt(dataset[lookup[data[i].player1]].winPoints[k].pointScored) + parseInt(data[i].winner1);
+							reps=dataset[lookup[data[i].player1]].winPoints[k].reps+1;
+							dataset[lookup[data[i].player1]].winPoints[k] = {year: data[i].year, pointScored: sum, reps: reps}
+							flag=1;
+						}
+					}
+					if((flag==0) && (data[i].winner1))
+					{
+						dataset[lookup[data[i].player1]].winPoints.push({year: data[i].year, pointScored: data[i].winner1, reps: 1});
+					}
+				}
+			}
+
+			//Winner Calculations Over
+
+			//Runner up calculations begin
+
+			var player2_data = full_data.filter(function (d){
+				return (d.player2 in lookup);
+			})
+
+			player2_data.sort(function(a,b) {
+				return d3.ascending(+a.year, +b.year);
+	    	});
+
+			for(var i=0; i<player2_data.length; i++)
+			{
+
+				var sum=0, flag=0;
+				for(var k=0; k<dataset[lookup[player2_data[i].player2]].winPoints.length; k++){
+					
+					if((player2_data[i].winner2) && (dataset[lookup[player2_data[i].player2]].winPoints[k].year === player2_data[i].year)){
+						
+						sum=parseInt(dataset[lookup[player2_data[i].player2]].winPoints[k].pointScored) + parseInt(player2_data[i].winner2);
+						reps=dataset[lookup[player2_data[i].player2]].winPoints[k].reps+1;
+						dataset[lookup[player2_data[i].player2]].winPoints[k] = {year: player2_data[i].year, pointScored: sum, reps: reps}
+						flag=1;
+
+					}
+				}
+				if((flag==0) && (player2_data[i].winner2))
+				{
+					dataset[lookup[player2_data[i].player2]].winPoints.push({year: player2_data[i].year, pointScored: parseInt(player2_data[i].winner2), reps: 1});
+				}
+			}
+
+
+			for(var i=0; i<dataset.length; i++){
+				dataset[i].winPoints.sort(function(a, b){
+			    var yearA = parseInt(a.year),
+			        yearB = parseInt(b.year);
+			    if(yearA < yearB) return -1;
+			    if(yearA > yearB) return 1;
+			    return 0;
+			});
+			}
+
+			//Runner Up Calculations over
+
+			for(var i=0; i < dataset.length; i++)
+			{
+				for( var k=0; k<dataset[i].winPoints.length; k++)
+				{
+
+					dataset[i].winPoints[k].pointScored = parseInt(dataset[i].winPoints[k].pointScored / dataset[i].winPoints[k].reps);
+					dataset[i].winPoints[k].year = new Date(dataset[i].winPoints[k].year);
+
+				}
+			}
+			xAxisScale.domain(d3.extent(data, function(d){ return (new Date(d.year)); }));
+			yAxisScale.domain(d3.extent(data, function(d) { return d.winner1; }));
+
+			var currentPlayer;
+			var legendSpace = ((height + margin.top + margin.bottom)/ dataset.length-1);
+
+			var groups = svg.selectAll("g").data(dataset).enter().append("g")
+			.on("mouseover", function(d) {
+
+			var currentPlayer = d.name;
+			var xPosition = width/2 + 10;
+        	var yPosition = margin.top-10;
+	    	})
+	    	.on("click", function(d){
+
+	    		// Generate the radial chart visualization
+
+	    		var widthRadial = 520,
+				heightRadial = 350;
+				
+				//Attribute Calulation for selected player
+
+	  			var fsa=0,ass1=0,ass2=0,bpc=0,rpc=0,count=[0,0,0,0,0];
+				for(var searchIndex = 0; searchIndex<full_data.length; searchIndex++){
+
+					if(full_data[searchIndex].player1===d.name)
+					{
+						
+						if(!isNaN(parseInt(full_data[searchIndex].firstServe1))){
+							
+							fsa = fsa + parseInt(full_data[searchIndex].firstServe1)/100;
+							count[0]++;
+							}
+
+						if(!isNaN(parseInt(full_data[searchIndex].firstPointWon1))){
+							
+							ass1 = ass1 + parseInt(full_data[searchIndex].firstPointWon1)/100;
+							count[1]++
+							}
+						
+						if(!isNaN(parseInt(full_data[searchIndex].secPointWon1))){
+							
+							ass2 = ass2 + parseInt(full_data[searchIndex].secPointWon1)/100;
+							count[2]++
+							}
+
+						if(!isNaN(parseInt(full_data[searchIndex].break1))){
+							
+							bpc = bpc + parseInt(full_data[searchIndex].break1)/100;
+							count[3]++
+							}
+						
+						if(!isNaN(parseInt(full_data[searchIndex].return1))){
+							
+							rpc = rpc + parseInt(full_data[searchIndex].return1)/100;
+							count[4]++
+							}
+					}
+					if(full_data[searchIndex].player2===d.name)
+					{
+						if(!isNaN(parseInt(full_data[searchIndex].firstServe2))){
+							
+							fsa = fsa + parseInt(full_data[searchIndex].firstServe2)/100;
+							count[0]++;
+							}
+						
+						if(!isNaN(parseInt(full_data[searchIndex].firstPointWon2))){
+							
+							ass1 = ass1 + parseInt(full_data[searchIndex].firstPointWon2)/100;
+							count[1]++
+							}
+						
+						if(!isNaN(parseInt(full_data[searchIndex].secPointWon2))){
+							
+							ass2 = ass2 + parseInt(full_data[searchIndex].secPointWon2)/100;
+							count[2]++
+							}
+
+						if(!isNaN(parseInt(full_data[searchIndex].break2))){
+							
+							bpc = bpc + parseInt(full_data[searchIndex].break2)/100;
+							count[3]++
+							}
+						
+						if(!isNaN(parseInt(full_data[searchIndex].return2))){
+							
+							rpc = rpc + parseInt(full_data[searchIndex].return2)/100;
+							count[4]++
+							}
+					}
+				}
+				if(count[0])
+				{
+					fsa=fsa/count[0];	
+				}
+				if(count[1])
+				{
+					ass1=ass1/count[1];	
+				}
+				if(count[2])
+				{
+				
+					ass2=ass2/count[2];	
+				}
+				if(count[3])
+				{
+					bpc=bpc/count[3];
+					
+				}
+				if(count[4])
+				{
+					rpc=rpc/count[4];		
+				}
+
+				var radialDataset = [
+	  			[
+	  				{axis: "First Serve Accuracy", value:fsa},
+	  				{axis: "First Serve Aces'", value:ass1},
+	  				{axis: "Second Serve Aces'", value:ass2},
+	  				{axis: "Break Points Won", value:bpc},
+	  				{axis: "Return Points Won", value:rpc}
+	  		]
+	  		]		
+
+				var colorscale = d3.scale.category10();
+			
+		var myconfig = {
+				w: widthRadial,
+				h: heightRadial,
+				maxValue: 1,
+				levels: 10,
+				ExtraWidthX: 120
+}
+RadarChart.draw(".chart", radialDataset, myconfig);
+
+var svg1 = d3.select('.chart')
+	.selectAll('svg1')
+	.append('svg1')
+	.attr("width", widthRadial+60)
+	.attr("height", heightRadial);
+});	    	
+
+	  		groups.append("title").text(function(d){ return d.name; });
+
+	  		groups.selectAll("path").data(function(d){
+	  			return [ d.winPoints ];
+	  		}).enter().append("path").attr("class", "line").attr("d", line);
+	  		groups.selectAll("path").data(function(d){
+	  			return [ d ];
+	  	})
+	  		.attr("id", 'play'+ function(d){ return 'play'+d.name.replace(/\s+/g, '')})
+	  		.style("stroke", function(d){
+	  			return d.color = color(d.name);
+	  		});
+	  		
+	  		groups.selectAll("path").attr("id", function(d){ return 'play'+d.name.replace(/\s+/g, '')});
+
+	  		var lineAndDots = svg.append("svg")
+    		.attr("class", "line-and-dots");
+
+    		for(var i=0; i<dataset.length;i++)
+    		{
+
+	  		var legend = groups.append("text").attr("y", (legendSpace/3)+ i*legendSpace)
+    			.attr("x", width+margin.left+65)
+    			.attr("class", "legendLine")
+    			.style("fill", function(){
+    				return dataset[i].color = color(dataset[i].name); })
+    			.on("click", function(){
+    				var selectedData = this.childNodes[0].data;
+    				var index;
+    				for(var selectIndex=0; selectIndex<dataset.length; selectIndex++){
+    					if(dataset[selectIndex].name === selectedData)
+    					{
+    						index=selectIndex;
+    						break;
+    					}
+    				}
+    				var active = dataset[index].active ? false : true;
+    				var opacityNew = active ? "none" : null;
+    				d3.select("#play"+dataset[index].name.replace(/\s+/g, ''))
+    					.transition().duration(100)
+    					.style("display", opacityNew);
+    				dataset[index].active = active;
+    			})
+				.text((dataset[i].name));
+
+				var legend = d3.select('svg')
+    			.append("g")
+      			.attr('class', 'legendLine')
+      			.attr('transform', function(d, i) {
+        		var height = legendSpace+20;
+        		var x = width+margin.left+margin.right;
+        		var y = i * height;
+        		return 'translate(' + x + ',' + y + ')';
+    			});
+
+	  		lineAndDots.selectAll("line-circle", "path")
+    		.data(dataset[i].winPoints)
+	    	.enter().append("circle")
+	        .attr("class", "data-circle")
+	        .attr("r", 5)
+	        .attr("cx", function(d) { return xAxisScale(new Date(d.year)); })
+	        .attr("cy", function(d) { return yAxisScale(d.pointScored); })
+	        .on("mouseover", function(d, dataset){
+
+	        	div.transition().duration(200).style("opacity",.8);
+	        	div.html("Avg. Points: " + d.pointScored + "<br/>" + "Year: " + (d.year.getFullYear()+1))
+	        		.style("left", (d3.event.pageX) + "px")
+	        		.style("top", (d3.event.pageY) + "px");	})
+	        .on("mouseout", function(d){
+	        	div.transition().duration(500).style("opacity", 0);
+	        });
+	     }
+	  		svg.append("g").attr("class", "x axis").attr("transform", "translate(0," + height + ")").call(xAxis)
+	  		.selectAll("text").style("text-anchor", "end").attr("dx", "-0.8em").attr("dy",".15em").attr("transform", "rotate(-65)");
+	  		svg.append("g").attr("class", "y axis").call(yAxis).append("text").attr("transform", "rotate(-90)").attr("x", "-24em").attr("y", "-3em").style("text-anchor", "start").text("Average points won per match");
+		
+	  	});
+	</script>
+		
+</body>
+</<!DOCTYPE html>
