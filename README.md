@@ -6,7 +6,7 @@ The Radial chart visualization maps the attributes of each player on a spider ch
 
 
 To view and interact with the visualizations, you can -
-- download the entire repository and run it on your local machine and run it using *Firefox* (if facing CORS issue),
+- download the entire repository and run it on your local machine, (Note: Run it using *Firefox*, if facing CORS issue),
 - browse to the link mentioned below.
 
   https://htmlpreview.github.io/?https://github.com/vishaltyagi94/Tennis-Aus-Open-Player-Stats/master/index.html
