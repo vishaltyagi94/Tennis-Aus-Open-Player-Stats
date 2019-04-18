@@ -1,4 +1,4 @@
-# Tennis-Aus-Open-Player-Stats
+# Australia Tennis Open - Visualization of Player Statistics
 D3 visualizations displaying the attribute comparison between the winners of each year
 
 The Line chart visualization shows the average points scored by players each year.
